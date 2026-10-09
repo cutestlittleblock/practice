@@ -1,9 +1,11 @@
 import time
 import re
+import functools
 
 #---defblock---#
 
 def loud(calfunc):
+    @functools.wraps(calfunc)
     def wrapper(*args,**kwargs):
         x=calfunc(*args,**kwargs)
         return x
@@ -12,7 +14,7 @@ def loud(calfunc):
 #---defblock---#
 
 @loud
-def add(x,y):return x+y
+def plus(x,y):return x+y
 
 #---defblock---#
 
@@ -47,12 +49,12 @@ class Main():
         self.math=[]
         self.math_list=[]
         self.precision=False
-        self.operator_dict={"+":add,"-":minus,"*":times,"/":quotient,"^":power,"=":None}
+        self.operator_dict={"+":plus,"-":minus,"*":times,"/":quotient,"^":power,"=":None}
         self.operator_weight_dict={"+":1,"-":1,"*":2,"/":2,"^":3,"=":0}
         self.error="别乱输喵omo"
         self.answer=None
         self.t=0
-        self.calculation=self.timer(self.calculation)
+        self.calculation=self.timer(self.calculation);self.value=self.timer(self.value)
         self.top=False
 
     #---defblock---#
@@ -75,6 +77,7 @@ class Main():
     #---defblock---#
 
     def timer(self,func):
+        @functools.wraps(func)
         def wrapper(*args,**kwargs):
             t0=time.perf_counter()
             result=func(*args,**kwargs)
@@ -85,10 +88,6 @@ class Main():
     #---defblock---#
 
     def value(self):
-        if len(self.put)==0:
-            print("这根本没东西可算喵omo")
-            return False
-
         for i,p in enumerate(self.put):
             if p is None:
                 continue
@@ -123,7 +122,7 @@ class Main():
                 else:
                     self.math_list.append(m)
         if len(self.math_list)==1:
-            if self.top:print(f"这根本只有一个{self.math}喵,是不是你用括号把整个式子还是一个数字包起来了喵")
+            if self.top:print(f"这根本只有一个{self.math[0]}喵,是不是你用括号把整个式子还是一个数字包起来了喵")
             self.answer=self.math_list[0]
             return True
         elif "=" in self.math_list[-2::-1]:
@@ -161,68 +160,68 @@ class Main():
 
 #——————classblock——————#
 
-class Pack():
+class Wrapper():
 
     #---defblock---#
 
     def __init__(self):
-        self.pack=[]
-        self.index=0
-        self.large=[];self.middle=[]
-        self.packed=[];self.large_packed=[];self.middle_packed=[]
+        self.wrap=[];self.unwrap=[]
+        self.index=0        
         self.error="括号怎么用的喵omo"
 
     #---defblock---#
 
-    def main_pack(self):
+    def main_wrapper(self):
+        self.index=0;self.unwrap=[]
 
-        while self.index<len(self.pack):
-            if self.pack[self.index]=="{":
-                if not self.large_pack(pack=self.pack,packed=self.packed,index=self.index):return False
-            elif self.pack[self.index]=="[":
-                if not self.middle_pack(pack=self.pack,packed=self.packed,index=self.index,under=False):return False
-            elif self.pack[self.index]=="(":
-                if not self.small_pack(pack=self.pack,packed=self.packed,index=self.index,under=False):return False
+        while self.index<len(self.wrap):
+            if self.wrap[self.index]=="{":
+                if not self.brace_wrapper(wrap=self.wrap,unwrap=self.unwrap,index=self.index):return False
+            elif self.wrap[self.index]=="[":
+                if not self.square_wrapper(wrap=self.wrap,unwrap=self.unwrap,index=self.index,nested=False):return False
+            elif self.wrap[self.index]=="(":
+                if not self.paren_wrapper(wrap=self.wrap,unwrap=self.unwrap,index=self.index,nested=False):return False
             else:
-                self.packed.append(self.pack[self.index])
+                self.unwrap.append(self.wrap[self.index])
                 self.index+=1
 
         return True
 
     #---defblock---#
 
-    def index_add(self,under,index):
-        if under:pass
+    def index_commit(self,nested,index):
+        if nested:pass
         else:
             self.index=index
 
     #---defblock---#
 
-    def large_pack(self,pack,packed,index):
-        self.large=[];self.large_packed=[]
-        if "}" not in self.pack[index:]:
+    def brace_wrapper(self,wrap,unwrap,index):
+        brace=[];brace_unwrap=[]
+
+        if "}" not in wrap[index:]:
             print(self.error)
             return False
         else:
             index+=1
             self.index+=1
 
-            while pack[index]!="}":
-                self.large.append(pack[index])
+            while wrap[index]!="}":
+                brace.append(wrap[index])
                 index+=1
                 self.index+=1
 
-            if "[" in self.large:
-                if not self.middle_pack(pack=self.large,packed=self.large_packed,index=0,under=True):return False
+            if "[" in brace:
+                if not self.square_wrapper(wrap=brace,unwrap=brace_unwrap,index=0,nested=True):return False
             else:
                 print(self.error)
                 return False
 
-            main.put=self.large_packed
+            main.put=brace_unwrap
             if not main.main_run():return False
-            large_answer=main.answer
+            brace_answer=main.answer
 
-            packed.append(large_answer)
+            unwrap.append(brace_answer)
             
             index+=1
             self.index+=1
@@ -230,81 +229,83 @@ class Pack():
 
     #---defblock---#
 
-    def middle_pack(self,pack,packed,index,under):
-        self.middle=[];self.middle_packed=[]
-        while index<len(pack) and pack[index]!="]":
-            if pack[index]=="[":
-                self.middle=[];self.middle_packed=[]
-                index+=1;self.index_add(under=under,index=index)
+    def square_wrapper(self,wrap,unwrap,index,nested):
+        square=[];square_unwrap=[]
+
+        while index<len(wrap) and wrap[index]!="]":
+            if wrap[index]=="[":
+                square=[];square_unwrap=[]
+                index+=1;self.index_commit(nested=nested,index=index)
                 try:
-                    while pack[index]!="]":
-                        self.middle.append(pack[index])
-                        index+=1;self.index_add(under=under,index=index)
+                    while wrap[index]!="]":
+                        square.append(wrap[index])
+                        index+=1;self.index_commit(nested=nested,index=index)
                 except IndexError:
                     print(self.error)
                     return False
 
-                index+=1;self.index_add(under=under,index=index)
+                index+=1;self.index_commit(nested=nested,index=index)
 
-                if "(" in self.middle:
-                    if not self.small_pack(pack=self.middle,packed=self.middle_packed,index=0,under=True):return False
+                if "(" in square:
+                    if not self.paren_wrapper(wrap=square,unwrap=square_unwrap,index=0,nested=True):return False
                 else:
                     print(self.error)
                     return False
 
-                main.put=self.middle_packed
+                main.put=square_unwrap
                 if not main.main_run():return False
-                middle_answer=main.answer
+                square_answer=main.answer
                 
-                packed.append(middle_answer)
+                unwrap.append(square_answer)
+                if not nested:return True
 
             else:
-                packed.append(pack[index])
+                unwrap.append(wrap[index])
 
-                index+=1;self.index_add(under=under,index=index)
+                index+=1;self.index_commit(nested=nested,index=index)
 
-        self.index_add(under=under,index=index+1)
-        return True
+        if nested:return True
 
     #---defblock---#
 
-    def small_pack(self,pack,packed,index,under):
-        depth=0;d=0;small=[]
-        while index<len(pack) and pack[index]!=")":
-            if pack[index]=="(":
-                small=[]
-                index+=1;self.index_add(under=under,index=index)
+    def paren_wrapper(self,wrap,unwrap,index,nested):
+        depth=0;d=0;paren=[]
+        
+        while index<len(wrap) and wrap[index]!=")":
+            if wrap[index]=="(":
+                paren=[]
+                index+=1;self.index_commit(nested=nested,index=index)
                 try:
-                    while pack[index]!=")":
-                        if pack[index]=="(":
+                    while wrap[index]!=")":
+                        if wrap[index]=="(":
                             d+=1;depth=index+1
                             while d:
-                                if pack[depth]=="(":d+=1
-                                elif pack[depth]==")":d-=1
+                                if wrap[depth]=="(":d+=1
+                                elif wrap[depth]==")":d-=1
                                 else:pass
                                 depth+=1
-                            if not self.small_pack(pack=pack[index:depth],packed=small,index=0,under=True):return False
-                            index=depth;self.index_add(under=under,index=index)
+                            if not self.paren_wrapper(wrap=wrap[index:depth],unwrap=paren,index=0,nested=True):return False
+                            index=depth;self.index_commit(nested=nested,index=index)
                         else:
-                            small.append(pack[index])
-                            index+=1;self.index_add(under=under,index=index)
+                            paren.append(wrap[index])
+                            index+=1;self.index_commit(nested=nested,index=index)
                 except IndexError:
                     print(self.error)
                     return False
-                index+=1;self.index_add(under=under,index=index)
+                index+=1;self.index_commit(nested=nested,index=index)
 
-                main.put=small
+                main.put=paren
                 if not main.main_run():return False
-                small_answer=main.answer
+                paren_answer=main.answer
 
-                packed.append(small_answer)
+                unwrap.append(paren_answer)
+                if not nested:return True
 
             else:
-                packed.append(pack[index])
+                unwrap.append(wrap[index])
 
-                index+=1;self.index_add(under=under,index=index)
+                index+=1;self.index_commit(nested=nested,index=index)
 
-        self.index_add(under=under,index=index+1)
         return True
 
     #---defblock---#
@@ -313,27 +314,35 @@ class Pack():
 
 token=re.compile(r"\.\d*|\d+\.?\d*|[+\-*/^=\(\)\[\]\{\}]")
 main=Main()
-pack=Pack()
+wrapper=Wrapper()
+switch=True
+try:
+    while switch:
+        main.t=0;main.top=False
+        wrapper.wrap=token.findall(input("我需要算什么喵："))
+        if not wrapper.wrap:print("这根本没东西可算喵omo");continue
+        if wrapper.main_wrapper():
 
-pack.pack=token.findall(input("我需要算什么喵："))
-if pack.main_pack():
+            precision=False
+            while precision is False:
+                try:
+                    precision=int(input("你需要小数点后几位喵："))
+                    if precision<0:
+                        precision=False
+                        print("别乱输喵omo")
+                        continue
+                except (TypeError,ValueError):
+                    print("别乱输喵omo")
 
-    precision=False
-    while precision is False:
-        try:
-            precision=int(input("你需要小数点后几位喵："))
-            if precision<0:
-                precision=False
-                print("别乱输喵omo")
-                continue
-        except (TypeError,ValueError):
-            print("别乱输喵omo")
+            main.put=wrapper.unwrap
+            main.top=True
+            if main.main_run():
 
-    main.put=pack.packed
-    main.top=True
-    if main.main_run():
+                answer=main.answer
+                t=main.t
+                if answer is not None:
+                    print(f"答案是{answer:.{precision}f}喵,思考用时约{t*1000:.4f}ms喵")
+        switch=input("还要不要算喵，输入任意继续喵，直接回车歇逼了喵：")
+except (EOFError,KeyboardInterrupt):print("不用别扒拉喵")
 
-        answer=main.answer
-        t=main.t
-        if answer is not None:
-            print(f"答案是{answer:.{precision}f}喵,思考用时约{t*1000:.4f}ms喵")
+print("下班了喵~感谢使用人家喵~下次再见喵~")
