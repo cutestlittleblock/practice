@@ -25,7 +25,8 @@ def history(data):
     else:
         try:
             for record in data:
-                print(f"你在第{record['序号']}轮\n问了{record['问题']}喵\n答案是{record['答案']}喵~\n");return True
+                print(f"你在第{record['序号']}轮\n问了{record['问题']}喵\n答案是{record['答案']}喵~\n")
+            return True
         except (TypeError,KeyError):
             print("这次的记录被搞坏了喵，我给你清空了喵");return False
         
