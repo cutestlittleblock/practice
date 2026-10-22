@@ -275,15 +275,29 @@ class ModularError(Exception):pass
 
 def constant(C):
     #e,π常数初始化
-    n=1;R=1;e=1
-    pi=basic_math(
-                  basic_math(antrigono(0.2,"atan"),16,"*"),
-                  basic_math(antrigono(basic_math(1,239,"/"),"atan"),4,"*"),
-                  "-"
-                  )#马青公式:pi=16arctan(1/5)-4arctan(1/239)
-    while absolute(R)>1e-17:
+    n=0;R=1;e=0
+    while absolute(R)>basic_math(10,-17,"^"):
+    #e初始化
         R=basic_math(1,factorial(n),"/")
         e+=R;n+=1
+    
+    n=0;R=basic_math(10,32,"^");pi=0
+    while absolute(R)>1:
+    #π初始化
+        R0=basic_math(basic_math(2,n,"*"),1,"+")
+        R1=basic_math(
+                      basic_math(basic_math(16,basic_math(10,17,"^"),"*"),basic_math(R0,basic_math(5,R0,"^"),"*"),"//"[0:2]),
+                      basic_math(-1,n,"^"),
+                      "*"
+                      )
+        R2=basic_math(
+                      basic_math(basic_math(4,basic_math(10,17,"^"),"*"),basic_math(R0,basic_math(239,R0,"^"),"*"),"//"[0:2]),
+                      basic_math(-1,n,"^"),
+                      "*"
+                      )
+        R=basic_math(R1,R2,"-")
+        pi+=R;n+=1#马青公式:pi*10^17=sum(16(-1)^n/(2n+1)5^(2n+1)-4(-1)^n/(2n+1)239^(2n+1))
+    pi=float(str(pi)[0]+"."+str(pi)[1:18])#整数转字符浮点化
 
     return (e if C=="e" else pi)
 
@@ -382,7 +396,7 @@ def trigono(*args):
     x=args[0];t=args[1]
     sinx=x;cosx=1
     R=1;n=1
-    while absolute(R)>1e-17:
+    while absolute(R)>basic_math(10,-17,"^"):
     #正弦计算
         R=basic_math(
                      basic_math(-1,n,"^"),
@@ -394,7 +408,7 @@ def trigono(*args):
         sinx+=R;n+=1
 
     R=1;n=1
-    while absolute(R)>1e-17:
+    while absolute(R)>basic_math(10,-17,"^"):
     #余弦计算
         R=basic_math(
                      basic_math(-1,n,"^"),
@@ -410,7 +424,7 @@ def trigono(*args):
                   "cot":lambda:cosx/sinx,"sec":lambda:1/cosx,"csc":lambda:1/sinx
                   }#三角推导式
     try:
-        if trigono_dict[t]()>1e16:raise ZeroDivisionError
+        if absolute(trigono_dict[t]())>basic_math(10,16,"^"):raise ZeroDivisionError
         return trigono_dict[t]()
     except ZeroDivisionError:print("这个三角函数不存在喵，趋于无穷了喵");raise OverflowError
 
@@ -421,7 +435,7 @@ def antrigono(*args):
     #反三角函数计算
     x=args[0];a=args[1];k=args[2]
     antri=x;R=1;n=1
-    while absolute(R)>1e-17:
+    while absolute(R)>basic_math(10,-17,"^"):
     #反正切计算(反正余弦转化为正切:asinx=atan(x/(1-x^2)^0.5))
         R=basic_math(
                      basic_math(-1,n,"^"),
@@ -437,7 +451,7 @@ def antrigono(*args):
     antrigono_dict={
                     "arctan":lambda:antri,"atan":lambda:antri,"arcsin":lambda:antri,"asin":lambda:antri,
                     "arccos":lambda:basic_math(main.pi/2,antri,"-"),"acos":lambda:basic_math(main.pi/2,antri,"-")
-                    }
+                    }#反三角推导式
     return antrigono_dict[a]()
 
 #---defblock---#
